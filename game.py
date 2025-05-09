@@ -14,16 +14,26 @@ class Game:
             self.tile_occupancy[pos] = piece
 
         self.selected_piece = None
+        self.valid_moves = []  # 🟡 ADD THIS LINE
 
     def select_piece(self, tile):
         piece = self.tile_occupancy.get(tile)
         if piece:
-            self.selected_piece = piece
-            return True
+            if self.selected_piece == piece:
+                self.selected_piece = None
+                self.valid_moves = []
+                return False
+            else:
+                self.selected_piece = piece
+                self.valid_moves = self.get_valid_moves(tile)  # 🟡 GET valid moves
+                return True
         return False
 
     def move_selected_piece(self, to_tile):
         if not self.selected_piece:
+            return False
+        if to_tile not in self.valid_moves:  # 🟢 ADD THIS LINE
+            print(f"Invalid move: {to_tile} is not a valid neighbor!")
             return False
         if self.tile_occupancy[to_tile] is not None:
             print(f"Tile {to_tile} is occupied!")
@@ -39,6 +49,7 @@ class Game:
         self.tile_occupancy[to_tile] = self.selected_piece
 
         self.selected_piece = None
+        self.valid_moves = []  # 🟡 CLEAR valid moves after move
         return True
 
     def get_valid_moves(self, from_tile):

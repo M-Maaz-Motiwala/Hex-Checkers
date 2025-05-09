@@ -43,12 +43,18 @@ def main():
                         break
 
                 if clicked_tile:
-                    if game.selected_piece:
-                        if game.move_selected_piece(clicked_tile):
-                            print(f"Moved piece to {clicked_tile}")
-                    else:
-                        if game.select_piece(clicked_tile):
+                    if game.tile_occupancy[clicked_tile]:
+                        # Clicked on a piece
+                        game.select_piece(clicked_tile)
+                        if game.selected_piece:
                             print(f"Selected {game.selected_piece.color} piece at {clicked_tile}")
+                        else:
+                            print(f"Deselected piece at {clicked_tile}")
+                    else:
+                        # Clicked on an empty tile
+                        if game.selected_piece:
+                            if game.move_selected_piece(clicked_tile):
+                                print(f"Moved piece to {clicked_tile}")
 
         screen.fill((172, 60, 80))
         screen.blit(board_img, (0, 0))
@@ -59,6 +65,11 @@ def main():
         if game.selected_piece:
             pygame.draw.circle(screen, (255, 255, 0), (game.selected_piece.x, game.selected_piece.y), 35, 4)
 
+        # Draw valid move markers
+        for tile in game.valid_moves:
+            x, y = TILE_POSITIONS[tile]
+            pygame.draw.circle(screen, (255, 255, 0), (x, y), 15)  # yellow dot
+            
         pygame.display.flip()
 
     pygame.quit()
