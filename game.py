@@ -4,7 +4,9 @@ from pieces import Piece
 from tilemap import TILE_POSITIONS, RED_TILE_NEIGHBORS, BLUE_TILE_NEIGHBORS, KING_TILE_NEIGHBORS
 
 class Game:
-    def __init__(self, initial_pieces):
+    def __init__(self, initial_pieces, mode = 'pvp'):
+        self.mode = mode
+        self.turn = "red"  # red starts
         self.pieces = []
         self.tile_occupancy = {pos: None for pos in TILE_POSITIONS}
 
@@ -18,7 +20,7 @@ class Game:
 
     def select_piece(self, tile):
         piece = self.tile_occupancy.get(tile)
-        if piece:
+        if piece and piece.color == self.turn:
             if self.selected_piece == piece:
                 self.selected_piece = None
                 self.valid_moves = []
@@ -94,15 +96,26 @@ class Game:
                 print(f"Blue piece at {to_tile} became a KING!")
 
         # 🟢 Check for possible further jumps from the new position
-        further_jumps = self.get_valid_jumps(to_tile)
-        if further_jumps:
-            self.selected_piece = self.tile_occupancy[to_tile]
-            self.valid_moves = further_jumps
-            print(f"Further jumps available: {further_jumps}")
+        if jumped_tile:
+            further_jumps = self.get_valid_jumps(to_tile)
+            if further_jumps:
+                self.selected_piece = self.tile_occupancy[to_tile]
+                self.valid_moves = further_jumps
+                print(f"Further jumps available: {further_jumps}")
+            else:
+                self.selected_piece = None
+                self.valid_moves = []
+                self.turn = "blue" if self.turn == "red" else "red"  # ✅ switch turn when no more jumps
         else:
             self.selected_piece = None
             self.valid_moves = []
-
+            self.turn = "blue" if self.turn == "red" else "red"  # switch turn
+            
+        # 🔴 Check game status
+        winner = self.check_game_over()
+        if winner:
+            print(f"🎉 Game Over! {winner.capitalize()} wins!")
+            
         return True
 
     def get_valid_moves(self, from_tile):
@@ -156,5 +169,29 @@ class Game:
                         valid_jumps.append(beyond_tile)
 
         return valid_jumps
+
+    def check_game_over(self):
+        red_pieces = [p for p in self.pieces if p.color == "red"]
+        blue_pieces = [p for p in self.pieces if p.color == "blue"]
+
+        if not red_pieces:
+            print("Blue wins! All red pieces captured.")
+            return "blue"
+        if not blue_pieces:
+            print("Red wins! All blue pieces captured.")
+            return "red"
+
+        red_moves = any(self.get_valid_moves(p.position) for p in red_pieces)
+        blue_moves = any(self.get_valid_moves(p.position) for p in blue_pieces)
+        # print("red pieces: " ,red_pieces)
+        # print("blue pieces: " ,blue_pieces)
+        if self.turn == "red" and not red_moves:
+            print("Blue wins! Red has no valid moves.")
+            return "blue"
+        if self.turn == "blue" and not blue_moves:
+            print("Red wins! Blue has no valid moves.")
+            return "red"
+
+        return None  # game not over
 
         
