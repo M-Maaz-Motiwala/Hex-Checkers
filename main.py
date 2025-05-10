@@ -13,12 +13,21 @@ def main():
 
     board_img = pygame.image.load(BOARD_IMAGE_PATH)
     board_img = pygame.transform.scale(board_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
-
+    
+    # Normal Piece
     red_piece_img = pygame.image.load(RED_PIECE_IMAGE_PATH)
     blue_piece_img = pygame.image.load(BLUE_PIECE_IMAGE_PATH)
 
     red_piece_img = pygame.transform.scale(red_piece_img, (60, 60))
     blue_piece_img = pygame.transform.scale(blue_piece_img, (60, 60))
+    
+    # king Piece
+    red_king_img = pygame.image.load(RED_PIECE_KING_IMAGE_PATH)
+    blue_king_img = pygame.image.load(BLUE_PIECE_KING_IMAGE_PATH)
+
+    red_king_img = pygame.transform.scale(red_king_img, (60, 60))
+    blue_king_img = pygame.transform.scale(blue_king_img, (60, 60))
+
 
     clock = pygame.time.Clock()
 
@@ -60,13 +69,15 @@ def main():
         screen.blit(board_img, (0, 0))
 
         for piece in game.pieces:
-            piece.draw(screen, red_piece_img, blue_piece_img)
+            piece.draw(screen, red_piece_img, blue_piece_img, red_king_img, blue_king_img)
 
         if game.selected_piece:
             pygame.draw.circle(screen, (255, 255, 0), (game.selected_piece.x, game.selected_piece.y), 35, 4)
 
         # Draw valid move markers
         for tile in game.valid_moves:
+            if tile == 'none':
+                continue
             x, y = TILE_POSITIONS[tile]
             pygame.draw.circle(screen, (255, 255, 0), (x, y), 15)  # yellow dot
             

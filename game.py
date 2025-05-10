@@ -28,7 +28,7 @@ class Game:
                 self.valid_moves = self.get_valid_moves(tile)  # 🟡 GET valid moves
                 return True
         return False
-
+    
     def move_selected_piece(self, to_tile):
         if not self.selected_piece:
             return False
@@ -41,33 +41,120 @@ class Game:
 
         from_tile = self.selected_piece.position
 
-        # Update piece position
-        self.selected_piece.move_to(to_tile)
+        if self.selected_piece.is_king:
+            neighbors = KING_TILE_NEIGHBORS
+        else:
+            neighbors = RED_TILE_NEIGHBORS if self.selected_piece.color == "red" else BLUE_TILE_NEIGHBORS
 
-        # Update tile occupancy map
+
+        # neighbors = RED_TILE_NEIGHBORS if self.selected_piece.color == "red" else BLUE_TILE_NEIGHBORS
+        # Check if this move is a jump
+        jumped_tile = None
+
+        for idx, neighbor in enumerate(neighbors.get(from_tile, [])):
+            if neighbor == "none" or self.tile_occupancy.get(neighbor) is None:
+                continue  # no enemy here, or invalid neighbor
+            enemy_piece = self.tile_occupancy.get(neighbor)
+            if enemy_piece.color == self.selected_piece.color:
+                continue  # same color, can't capture own piece
+
+            beyond_neighbors = neighbors.get(neighbor, [])
+            if idx >= len(beyond_neighbors):
+                continue  # no neighbor in this direction
+            landing_tile = beyond_neighbors[idx]
+            if landing_tile == to_tile and self.tile_occupancy.get(landing_tile) is None:
+                jumped_tile = neighbor
+                break
+
+
+        # REMOVE captured piece if a jump happened
+        if jumped_tile:
+            captured_piece = self.tile_occupancy.get(jumped_tile)
+            if captured_piece:
+                print(f"Captured {captured_piece.color} piece at {jumped_tile}")
+                self.pieces.remove(captured_piece)
+                self.tile_occupancy[jumped_tile] = None
+
+        # Move the piece
+        self.selected_piece.move_to(to_tile)
         self.tile_occupancy[from_tile] = None
         self.tile_occupancy[to_tile] = self.selected_piece
+        
+        # 🟢 KING PROMOTION CHECK
+        red_king_tiles = {"A3", "B5", "C7"}
+        blue_king_tiles = {"C1", "D1", "F1"}
+        
+        if self.selected_piece.color == "red" and to_tile in red_king_tiles:
+            if not self.selected_piece.is_king:
+                self.selected_piece.is_king = True
+                print(f"Red piece at {to_tile} became a KING!")
+        elif self.selected_piece.color == "blue" and to_tile in blue_king_tiles:
+            if not self.selected_piece.is_king:
+                self.selected_piece.is_king = True
+                print(f"Blue piece at {to_tile} became a KING!")
 
-        self.selected_piece = None
-        self.valid_moves = []  # 🟡 CLEAR valid moves after move
+        # 🟢 Check for possible further jumps from the new position
+        further_jumps = self.get_valid_jumps(to_tile)
+        if further_jumps:
+            self.selected_piece = self.tile_occupancy[to_tile]
+            self.valid_moves = further_jumps
+            print(f"Further jumps available: {further_jumps}")
+        else:
+            self.selected_piece = None
+            self.valid_moves = []
+
         return True
 
     def get_valid_moves(self, from_tile):
+        valid_moves = []
+        piece = self.tile_occupancy.get(from_tile)
+        if not piece:
+            return valid_moves
+
+        neighbors_map = KING_TILE_NEIGHBORS if piece.is_king else (RED_TILE_NEIGHBORS if piece.color == 'red' else BLUE_TILE_NEIGHBORS)
+        neighbors = neighbors_map.get(from_tile, [])
+
+        for idx, neighbor in enumerate(neighbors):
+            if neighbor == "none":
+                continue
+
+            neighbor_piece = self.tile_occupancy.get(neighbor)
+
+            if neighbor_piece is None:
+                # normal move
+                valid_moves.append(neighbor)
+            elif neighbor_piece.color != piece.color:
+                # enemy → check beyond
+                beyond_neighbors = neighbors_map.get(neighbor, [])
+                if idx >= len(beyond_neighbors):
+                    continue  # no beyond position
+                landing_tile = beyond_neighbors[idx]
+                if landing_tile != "none" and self.tile_occupancy.get(landing_tile) is None:
+                    # valid capture
+                    valid_moves.append(landing_tile)
+
+        return valid_moves  
+    
+    
+    def get_valid_jumps(self, from_tile):
         piece = self.tile_occupancy[from_tile]
         if piece is None:
             return []
 
-        if hasattr(piece, 'is_king') and piece.is_king:
-            neighbor_map = KING_TILE_NEIGHBORS
-        elif piece.color == "red":
-            neighbor_map = RED_TILE_NEIGHBORS
-        else:
-            neighbor_map = BLUE_TILE_NEIGHBORS
+        neighbor_map = KING_TILE_NEIGHBORS if getattr(piece, 'is_king', False) else (RED_TILE_NEIGHBORS if piece.color == "red" else BLUE_TILE_NEIGHBORS)
+        enemy_color = "blue" if piece.color == "red" else "red"
 
-        valid_moves = []
+        valid_jumps = []
         neighbors = neighbor_map.get(from_tile, [])
-        for to_tile in neighbors:
-            if self.tile_occupancy[to_tile] is None:
-                valid_moves.append(to_tile)
+        for idx, neighbor in enumerate(neighbors):
+            neighbor_piece = self.tile_occupancy.get(neighbor)
+            if neighbor_piece and neighbor_piece.color == enemy_color:
+                beyond_neighbors = neighbor_map.get(neighbor, [])
+                if idx < len(beyond_neighbors):
+                    beyond_tile = beyond_neighbors[idx]
+                    if beyond_tile and self.tile_occupancy.get(beyond_tile) is None:
+                        valid_jumps.append(beyond_tile)
 
-        return valid_moves
+        return valid_jumps
+
+        
