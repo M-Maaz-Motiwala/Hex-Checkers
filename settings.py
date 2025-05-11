@@ -2,8 +2,9 @@
 
 # Screen dimensions
 SCREEN_WIDTH = 884
-SCREEN_HEIGHT = 635
-
+SCREEN_HEIGHT = 750
+BOARD_Y = (SCREEN_HEIGHT - 635) // 2
+  
 # Game settings
 FPS = 60
 

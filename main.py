@@ -41,7 +41,7 @@ def draw_menu(screen):
     button_font = pygame.font.SysFont("arial", 36)
     title_font = pygame.font.SysFont("arial", 64)
 
-    options = ["Player vs Player", "Player vs CPU"]
+    options = ["Player vs Player", "Player vs CPU (Easy)", "Player vs CPU (Hard)"]
     selected_index = 0
 
     while True:
@@ -75,18 +75,22 @@ def draw_menu(screen):
                 elif event.key == pygame.K_DOWN:
                     selected_index = (selected_index + 1) % len(options)
                 elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
-                    return 'pvp' if selected_index == 0 else 'pvcpu'
+                    return ['pvp', 'pvcpu_easy', 'pvcpu_hard'][selected_index]
                 elif event.key == pygame.K_1:
                     return 'pvp'
                 elif event.key == pygame.K_2:
-                    return 'pvcpu'
+                    return 'pvcpu_easy'
+                elif event.key == pygame.K_3:
+                    return 'pvcpu_hard'
+
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for idx, option in enumerate(options):
                     text = button_font.render(f"{idx + 1}. {option}", True, (255, 255, 255))
                     text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, 300 + idx * 70))
                     if text_rect.collidepoint(mouse_x, mouse_y):
-                        return 'pvp' if idx == 0 else 'pvcpu'
+                        return ['pvp', 'pvcpu_easy', 'pvcpu_hard'][idx]
+
 
             elif event.type == pygame.MOUSEMOTION:
                 for idx in range(len(options)):
@@ -101,7 +105,8 @@ def main():
     pygame.display.set_caption("Hexagon Checkers")
 
     board_img = pygame.image.load(BOARD_IMAGE_PATH)
-    board_img = pygame.transform.scale(board_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    # board_img = pygame.transform.scale(board_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
     # Load pieces
     red_piece_img = pygame.transform.scale(pygame.image.load(RED_PIECE_IMAGE_PATH), (60, 60))
@@ -142,12 +147,18 @@ def main():
                                 if moved:
                                     winner = game.check_game_over()
                                     print(winner)
-                                    if winner:
-                                        display_winner(screen, winner)
-                                        running = False  # End game loop, return to menu
+                                    print(Game.AI)
+                                    if winner or Game.AI:
+                                        if winner == None:
+                                            display_winner(screen, Game.AI)
+                                            Game.AI = None
+                                            running = False  # End game loop, return to menu
+                                        else:
+                                            display_winner(screen, winner)
+                                            running = False  # End game loop, return to menu
 
             screen.fill((172, 60, 80))
-            screen.blit(board_img, (0, 0))
+            screen.blit(board_img, (0, BOARD_Y))
 
             for piece in game.pieces:
                 piece.draw(screen, red_piece_img, blue_piece_img, red_king_img, blue_king_img)

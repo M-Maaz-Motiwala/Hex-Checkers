@@ -6,6 +6,7 @@ import copy
 import random  # move this to the top of the file
 
 class Game:
+    AI = None
     def __init__(self, initial_pieces, mode, simulation = False):
         self.simulation = simulation
         self.mode = mode
@@ -167,9 +168,11 @@ class Game:
 
         if self.turn == "red" and not red_moves:
             print("Blue wins! Red has no valid moves.")
+            Game.AI = 'blue'
             return "blue"
         if self.turn == "blue" and not blue_moves:
             print("Red wins! Blue has no valid moves.")
+            Game.AI = 'red'
             return "red"
 
         return None
@@ -179,48 +182,48 @@ class Game:
         self.valid_moves = []
         self.turn = "blue" if self.turn == "red" else "red"
 
-        if self.mode == "pvcpu" and self.turn == "blue" and not self.simulation:
-            self.ai_move()
+        if (self.mode == "pvcpu_easy") and self.turn == "blue" and not self.simulation:
+            self.ai_move_easy()
+        elif (self.mode == "pvcpu_hard") and self.turn == "blue" and not self.simulation:
+            self.ai_move_hard()
 
-    # import random
+    def ai_move_easy(self):
+        print("AI is thinking...")
 
-    # def ai_move(self):
-    #     print("AI is thinking...")
+        blue_pieces = [p for p in self.pieces if p.color == "blue"]
+        all_moves = []
 
-    #     blue_pieces = [p for p in self.pieces if p.color == "blue"]
-    #     all_moves = []
-
-    #     for piece in blue_pieces:
-    #         valid_moves = self.get_valid_moves(piece.position)
-    #         for move in valid_moves:
-    #             simulated_game = copy.deepcopy(self)
-    #             simulated_piece = simulated_game.tile_occupancy[piece.position]
-    #             simulated_game.selected_piece = simulated_piece
-    #             simulated_game.valid_moves = simulated_game.get_valid_moves(piece.position)
+        for piece in blue_pieces:
+            valid_moves = self.get_valid_moves(piece.position)
+            for move in valid_moves:
+                simulated_game = copy.deepcopy(self)
+                simulated_piece = simulated_game.tile_occupancy[piece.position]
+                simulated_game.selected_piece = simulated_piece
+                simulated_game.valid_moves = simulated_game.get_valid_moves(piece.position)
                 
-    #             if simulated_game.move_selected_piece(move):
-    #                 gain = len(self.pieces) - len(simulated_game.pieces)
-    #                 all_moves.append((gain, piece.position, move))
+                if simulated_game.move_selected_piece(move):
+                    gain = len(self.pieces) - len(simulated_game.pieces)
+                    all_moves.append((gain, piece.position, move))
 
-    #     if not all_moves:
-    #         print("AI has no valid moves. Skipping turn.")
-    #         self.end_turn()
-    #         return
+        if not all_moves:
+            print("AI has no valid moves. Skipping turn.")
+            winner = self.check_game_over()
+            return
 
-    #     # Pick move with maximum gain
-    #     all_moves.sort(reverse=True)
-    #     best_move = all_moves[0]
-    #     from_tile, to_tile = best_move[1], best_move[2]
+        # Pick move with maximum gain
+        all_moves.sort(reverse=True)
+        best_move = all_moves[0]
+        from_tile, to_tile = best_move[1], best_move[2]
 
-    #     # Execute the move directly
-    #     ai_piece = self.tile_occupancy[from_tile]
-    #     self.selected_piece = ai_piece
-    #     self.valid_moves = self.get_valid_moves(from_tile)
+        # Execute the move directly
+        ai_piece = self.tile_occupancy[from_tile]
+        self.selected_piece = ai_piece
+        self.valid_moves = self.get_valid_moves(from_tile)
 
-    #     print(f"AI moves from {from_tile} to {to_tile}")
-    #     self.move_selected_piece(to_tile)
+        print(f"AI moves from {from_tile} to {to_tile}")
+        self.move_selected_piece(to_tile)
 
-    def ai_move(self):
+    def ai_move_hard(self):
         print("AI is thinking (Minimax)...")
         depth = 3  # You can adjust this based on desired difficulty
 
