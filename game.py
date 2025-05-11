@@ -3,9 +3,11 @@
 from pieces import Piece
 from tilemap import TILE_POSITIONS, RED_TILE_NEIGHBORS, BLUE_TILE_NEIGHBORS, KING_TILE_NEIGHBORS
 import copy
+import random  # move this to the top of the file
 
 class Game:
-    def __init__(self, initial_pieces, mode):
+    def __init__(self, initial_pieces, mode, simulation = False):
+        self.simulation = simulation
         self.mode = mode
         self.turn = "red"
         self.pieces = []
@@ -34,10 +36,10 @@ class Game:
 
     def move_selected_piece(self, to_tile):
         if not self.selected_piece or to_tile not in self.valid_moves:
-            print(f"Invalid move to {to_tile}")
+            # print(f"Invalid move to {to_tile}")
             return False
         if self.tile_occupancy[to_tile] is not None:
-            print(f"Tile {to_tile} is occupied!")
+            # print(f"Tile {to_tile} is occupied!")
             return False
 
         from_tile = self.selected_piece.position
@@ -63,11 +65,9 @@ class Game:
         if jumped_tile:
             captured_piece = self.tile_occupancy[jumped_tile]
             if captured_piece:
-                print(f"Captured {captured_piece.color} piece at {jumped_tile}")
                 self.pieces.remove(captured_piece)
                 self.tile_occupancy[jumped_tile] = None
 
-        print(f"Attempting to move piece from {from_tile} to {to_tile}")
 
         self.selected_piece.move_to(to_tile)
         self.tile_occupancy[from_tile] = None
@@ -90,7 +90,7 @@ class Game:
             if further_jumps:
                 self.selected_piece = self.tile_occupancy[to_tile]
                 self.valid_moves = further_jumps
-                print(f"Further jumps available: {further_jumps}")
+                # print(f"Further jumps available: {further_jumps}")
             else:
                 self.end_turn()
         else:
@@ -125,7 +125,6 @@ class Game:
                     landing_tile = beyond_neighbors[idx]
                     if landing_tile != "none" and self.tile_occupancy.get(landing_tile) is None:
                         valid_moves.append(landing_tile)
-        print(f"Valid moves for {piece.color} piece at {from_tile}: {valid_moves}")
 
         return valid_moves
 
@@ -180,46 +179,119 @@ class Game:
         self.valid_moves = []
         self.turn = "blue" if self.turn == "red" else "red"
 
-        if self.mode == "pvcpu" and self.turn == "blue":
+        if self.mode == "pvcpu" and self.turn == "blue" and not self.simulation:
             self.ai_move()
 
-    import random
+    # import random
+
+    # def ai_move(self):
+    #     print("AI is thinking...")
+
+    #     blue_pieces = [p for p in self.pieces if p.color == "blue"]
+    #     all_moves = []
+
+    #     for piece in blue_pieces:
+    #         valid_moves = self.get_valid_moves(piece.position)
+    #         for move in valid_moves:
+    #             simulated_game = copy.deepcopy(self)
+    #             simulated_piece = simulated_game.tile_occupancy[piece.position]
+    #             simulated_game.selected_piece = simulated_piece
+    #             simulated_game.valid_moves = simulated_game.get_valid_moves(piece.position)
+                
+    #             if simulated_game.move_selected_piece(move):
+    #                 gain = len(self.pieces) - len(simulated_game.pieces)
+    #                 all_moves.append((gain, piece.position, move))
+
+    #     if not all_moves:
+    #         print("AI has no valid moves. Skipping turn.")
+    #         self.end_turn()
+    #         return
+
+    #     # Pick move with maximum gain
+    #     all_moves.sort(reverse=True)
+    #     best_move = all_moves[0]
+    #     from_tile, to_tile = best_move[1], best_move[2]
+
+    #     # Execute the move directly
+    #     ai_piece = self.tile_occupancy[from_tile]
+    #     self.selected_piece = ai_piece
+    #     self.valid_moves = self.get_valid_moves(from_tile)
+
+    #     print(f"AI moves from {from_tile} to {to_tile}")
+    #     self.move_selected_piece(to_tile)
 
     def ai_move(self):
-        print("AI is thinking...")
+        print("AI is thinking (Minimax)...")
+        depth = 3  # You can adjust this based on desired difficulty
 
-        blue_pieces = [p for p in self.pieces if p.color == "blue"]
-        all_moves = []
+        score, from_tile, to_tile = self.minimax_ABP(depth, is_maximizing=True, alpha=float('-inf'), beta=float('inf'))
 
-        for piece in blue_pieces:
-            valid_moves = self.get_valid_moves(piece.position)
-            for move in valid_moves:
-                simulated_game = copy.deepcopy(self)
-                simulated_piece = simulated_game.tile_occupancy[piece.position]
-                simulated_game.selected_piece = simulated_piece
-                simulated_game.valid_moves = simulated_game.get_valid_moves(piece.position)
-                
-                if simulated_game.move_selected_piece(move):
-                    gain = len(self.pieces) - len(simulated_game.pieces)
-                    all_moves.append((gain, piece.position, move))
-
-        if not all_moves:
-            print("AI has no valid moves. Skipping turn.")
+        if from_tile is None or to_tile is None:
+            # print("AI has no valid moves.")
             self.end_turn()
             return
 
-        # Pick move with maximum gain
-        all_moves.sort(reverse=True)
-        best_move = all_moves[0]
-        from_tile, to_tile = best_move[1], best_move[2]
-
-        # Execute the move directly
         ai_piece = self.tile_occupancy[from_tile]
         self.selected_piece = ai_piece
         self.valid_moves = self.get_valid_moves(from_tile)
 
-        print(f"AI moves from {from_tile} to {to_tile}")
+        print(f"AI moves from {from_tile} to {to_tile} (Score: {score})")
         self.move_selected_piece(to_tile)
+         # Perform additional jumps if available
+        while self.selected_piece and self.valid_moves:
+            print(f"AI continues multi-jump from {self.selected_piece.position}")
+            next_jump = self.valid_moves[0]  # Just take the first valid jump for now
+            self.move_selected_piece(next_jump)
+            
+    def minimax_ABP(self, depth, is_maximizing, alpha=float('-inf'), beta=float('inf')):
+        winner = self.check_game_over()
+        if winner == "blue":
+            return (float('inf'), None, None)
+        elif winner == "red":
+            return (float('-inf'), None, None)
+        elif depth == 0:
+            return (self.evaluate_board(), None, None)
 
+        current_color = "blue" if is_maximizing else "red"
+        pieces = [p for p in self.pieces if p.color == current_color]
 
+        best_score = float('-inf') if is_maximizing else float('inf')
+        best_move = (None, None)
+
+        for piece in pieces:
+            valid_moves = self.get_valid_moves(piece.position)
+            for move in valid_moves:
+                sim_game = copy.deepcopy(self)
+                sim_game.simulation = True
+                sim_piece = sim_game.tile_occupancy[piece.position]
+                sim_game.selected_piece = sim_piece
+                sim_game.valid_moves = sim_game.get_valid_moves(piece.position)
+                moved = sim_game.move_selected_piece(move)
+
+                if not moved:
+                    continue
+
+                score, _, _ = sim_game.minimax_ABP(depth - 1, not is_maximizing, alpha, beta)
+
+                if is_maximizing:
+                    if score > best_score:
+                        best_score = score
+                        best_move = (piece.position, move)
+                    alpha = max(alpha, best_score)
+                else:
+                    if score < best_score:
+                        best_score = score
+                        best_move = (piece.position, move)
+                    beta = min(beta, best_score)
+
+                # 💡 Alpha-Beta Pruning step
+                if beta <= alpha:
+                    break  # Prune remaining branches
+
+        return best_score, best_move[0], best_move[1]
+        
     
+    def evaluate_board(self):
+        red_score = sum(2 if p.is_king else 1 for p in self.pieces if p.color == "red")
+        blue_score = sum(2 if p.is_king else 1 for p in self.pieces if p.color == "blue")
+        return blue_score - red_score  # Positive means good for blue (AI)

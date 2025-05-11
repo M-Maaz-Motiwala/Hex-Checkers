@@ -141,6 +141,7 @@ def main():
                                 moved = game.move_selected_piece(clicked_tile)
                                 if moved:
                                     winner = game.check_game_over()
+                                    print(winner)
                                     if winner:
                                         display_winner(screen, winner)
                                         running = False  # End game loop, return to menu
@@ -160,9 +161,6 @@ def main():
                     pygame.draw.circle(screen, (255, 255, 0), (x, y), 15)
 
             pygame.display.flip()
-            
-        pygame.quit()
-        sys.exit()
 
 if __name__ == "__main__":
     main()
