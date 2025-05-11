@@ -8,6 +8,7 @@ import random  # move this to the top of the file
 class Game:
     AI = None
     def __init__(self, initial_pieces, mode, simulation = False):
+        # self.move_sound = move_sound
         self.simulation = simulation
         self.mode = mode
         self.turn = "red"
