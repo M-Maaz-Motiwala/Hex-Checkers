@@ -1,8 +1,11 @@
+# game.py
+
 from pieces import Piece
 from tilemap import TILE_POSITIONS, RED_TILE_NEIGHBORS, BLUE_TILE_NEIGHBORS, KING_TILE_NEIGHBORS
+import copy
 
 class Game:
-    def __init__(self, initial_pieces, mode='pvp'):
+    def __init__(self, initial_pieces, mode):
         self.mode = mode
         self.turn = "red"
         self.pieces = []
@@ -64,6 +67,8 @@ class Game:
                 self.pieces.remove(captured_piece)
                 self.tile_occupancy[jumped_tile] = None
 
+        print(f"Attempting to move piece from {from_tile} to {to_tile}")
+
         self.selected_piece.move_to(to_tile)
         self.tile_occupancy[from_tile] = None
         self.tile_occupancy[to_tile] = self.selected_piece
@@ -97,11 +102,6 @@ class Game:
 
         return True
 
-    def end_turn(self):
-        self.selected_piece = None
-        self.valid_moves = []
-        self.turn = "blue" if self.turn == "red" else "red"
-
     def get_valid_moves(self, from_tile):
         valid_moves = []
         piece = self.tile_occupancy.get(from_tile)
@@ -125,6 +125,7 @@ class Game:
                     landing_tile = beyond_neighbors[idx]
                     if landing_tile != "none" and self.tile_occupancy.get(landing_tile) is None:
                         valid_moves.append(landing_tile)
+        print(f"Valid moves for {piece.color} piece at {from_tile}: {valid_moves}")
 
         return valid_moves
 
@@ -173,5 +174,52 @@ class Game:
             return "red"
 
         return None
+
+    def end_turn(self):
+        self.selected_piece = None
+        self.valid_moves = []
+        self.turn = "blue" if self.turn == "red" else "red"
+
+        if self.mode == "pvcpu" and self.turn == "blue":
+            self.ai_move()
+
+    import random
+
+    def ai_move(self):
+        print("AI is thinking...")
+
+        blue_pieces = [p for p in self.pieces if p.color == "blue"]
+        all_moves = []
+
+        for piece in blue_pieces:
+            valid_moves = self.get_valid_moves(piece.position)
+            for move in valid_moves:
+                simulated_game = copy.deepcopy(self)
+                simulated_piece = simulated_game.tile_occupancy[piece.position]
+                simulated_game.selected_piece = simulated_piece
+                simulated_game.valid_moves = simulated_game.get_valid_moves(piece.position)
+                
+                if simulated_game.move_selected_piece(move):
+                    gain = len(self.pieces) - len(simulated_game.pieces)
+                    all_moves.append((gain, piece.position, move))
+
+        if not all_moves:
+            print("AI has no valid moves. Skipping turn.")
+            self.end_turn()
+            return
+
+        # Pick move with maximum gain
+        all_moves.sort(reverse=True)
+        best_move = all_moves[0]
+        from_tile, to_tile = best_move[1], best_move[2]
+
+        # Execute the move directly
+        ai_piece = self.tile_occupancy[from_tile]
+        self.selected_piece = ai_piece
+        self.valid_moves = self.get_valid_moves(from_tile)
+
+        print(f"AI moves from {from_tile} to {to_tile}")
+        self.move_selected_piece(to_tile)
+
 
     
