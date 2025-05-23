@@ -25,7 +25,7 @@ def display_winner(screen, winner):
     screen.blit(sub_text, sub_rect)
 
     pygame.display.update()
-
+        
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -95,15 +95,9 @@ def draw_menu(screen):
                     if button_rect.collidepoint(mouse_x, mouse_y):
                         return ['pvp', 'pvcpu_easy', 'pvcpu_hard'][idx]
 
-
-
-
 def main():
     pygame.init()
-    # At the top of main.py
-    pygame.mixer.init()
-    move_sound = pygame.mixer.Sound("sounds/move.wav")
-    
+
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Hexagon Checkers")
 
