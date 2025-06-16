@@ -79,7 +79,7 @@ The AI component was developed using the **Minimax algorithm**, enhanced with **
 ## 10. How to Run
 
 1. Clone the repository: git clone https://github.com/M-Maaz-Motiwala/Hex-Checkers.git
-2. Install Pygame
+2. Install Pygame.
 3. Run the game:
 
 
