@@ -31,7 +31,13 @@ The final version of **Hex-Checkers/Draught** offers three gameplay modes:
 2. **Player vs NPC (Easy)**: The AI opponent looks for the current gain, basically having a depth of 1.
 3. **Player vs NPC (Hard)**: The AI opponent uses a deeper Minimax search with Alpha-Beta pruning, resulting in more calculated, strategic gameplay.
 
+| Mode | Demo |
+|------|------|
+| **Player vs Player** | ![PvP Demo](assets/gifs/pvp.gif) |
+| **Player vs CPU (Easy)** | ![CPU Easy Demo](assets/gifs/cpu_easy.gif) |
+| **Player vs CPU (Hard)** | ![CPU Hard Demo](assets/gifs/cpu_hard.gif) |
 
+> *(GIFs loop automatically. Click to view full‑size.)*
 > **Note:** The core movement and capture mechanics remain consistent across all modes.
 
 ## 4. AI Methodology
