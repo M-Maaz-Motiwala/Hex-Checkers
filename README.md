@@ -36,8 +36,8 @@ The final version of **Hex-Checkers/Draught** offers three gameplay modes:
 | **Player vs Player** | ![PvP Demo](assets/gifs/pvp.gif) |
 | **Player vs CPU (Easy)** | ![CPU Easy Demo](assets/gifs/cpu_easy.gif) |
 | **Player vs CPU (Hard)** | ![CPU Hard Demo](assets/gifs/cpu_hard.gif) |
-![PvP Demo](assets/gifs/pvp.gif)
 > *(GIFs loop automatically. Click to view full‑size.)*
+![PvP Demo](assets/gifs/pvp.gif)
 > **Note:** The core movement and capture mechanics remain consistent across all modes.
 
 ## 4. AI Methodology
