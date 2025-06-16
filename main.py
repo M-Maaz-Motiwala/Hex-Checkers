@@ -101,6 +101,9 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Hexagon Checkers")
 
+    # board_img = pygame.image.load(BOARD_IMAGE_PATH)
+    
+    
     board_img = pygame.image.load(BOARD_IMAGE_PATH)
     red_piece_img = pygame.transform.scale(pygame.image.load(RED_PIECE_IMAGE_PATH), (60, 60))
     blue_piece_img = pygame.transform.scale(pygame.image.load(BLUE_PIECE_IMAGE_PATH), (60, 60))
